@@ -1,5 +1,9 @@
 import numpy as np
 
+# Activation functions
+SIGMOID = 'sigmoid'
+RELU = 'relu'
+
 
 class MLP(object):
     def __init__(self, config):
@@ -12,6 +16,11 @@ class MLP(object):
         E,g., [10, 20] means the
         first hidden layer has 10 neurons and the second has 20.
         """
+        self.num_layers = len(config)
+        self.layers = config['layers']
+        self.input_dim = config['input_dim']
+        # print(self.input_dim)
+        # print(self.layers)
         return
 
     # compute the output of the neural network.
@@ -69,8 +78,28 @@ class MLP(object):
         """
 
 
+# Sigmoid function
+def sigmoid(z):
+    """
+    :param z: a vector or Numpy array
+    :return:
+    """
+    return 1.0 / (1.0 + np.exp(-z))
+
+
+# relu function
+def relu(z):
+    """
+    :param z: a vector or Numpy array
+    :return:
+    """
+    return np.maximum(z, 0, z)
+
+
 # Create network:
 nn = MLP({'input_dim': 100, 'layers': [10, 20]})
+print(nn.input_dim)
+print(nn.layers)
 
 # # Train:
 # for epoch in range(n_iter):
