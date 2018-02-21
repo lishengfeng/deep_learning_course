@@ -1,8 +1,16 @@
-import numpy as np
+import numpy
 
 # Activation functions
 SIGMOID = 'sigmoid'
 RELU = 'relu'
+
+
+class Layer(object):
+    def __init__(self, units, activation='relu', **kwargs):
+        if 'input_dim' in kwargs:
+            self.input_dim = (kwargs.pop('input_dim'),)
+        self.units = units
+        self.activation = activation
 
 
 class MLP(object):
@@ -16,12 +24,42 @@ class MLP(object):
         E,g., [10, 20] means the
         first hidden layer has 10 neurons and the second has 20.
         """
-        self.num_layers = len(config)
-        self.layers = config['layers']
+        self.sizes = []
+        self.sizes = [config['input_dim']] + config['layers'] + [1]
+
+        # self.num_layers = len(config)
+        # layers = config['layers']
         self.input_dim = config['input_dim']
-        # print(self.input_dim)
-        # print(self.layers)
+
+        # self.layers = []
+        # # Input layer (+1 unit for bias)
+        # self.layers.append(numpy.zeros(config['input_dim'] + 1))
+        # # Hidden layer(s)
+        # for i in layers[:]:
+        #     self.layers.append(numpy.zeros(i))
+        # # Output layer
+        # self.layers.append(numpy.zeros(1))
+
+        self.biases = [numpy.random.randn(y, 1) for y in self.sizes[1:]]
+        self.weights = [numpy.random.randn(y, x) for x, y in
+                        zip(self.sizes[:-1], self.sizes[1:])]
+        #
+        # self.add(Layer(layers[0], input_dim=config['input_dim']))
+        # for n in layers[1:]:
+        #     self.add(Layer(n))
+        # self.add(Layer(1, activation='sigmoid'))
+
+        # self.biases = [numpy.random.randn(y, 1) for y in self.layers[1:]]
+        # self.weights = [numpy.random.randn(y, x) for x, y in
+        #                 zip(self.layers[:-1], self.layers[1:])]
+        # for x , y in(zip(self.layers[:-1], self.layers[1:])):
+        #     print(str(x) + " : " + str(y))
+        print(self.biases)
+        # print(self.weights)
         return
+
+    # def add(self, layer):
+    #     pass
 
     # compute the output of the neural network.
     def __call__(self, data):
@@ -33,7 +71,21 @@ class MLP(object):
         the output layer for the n data
         points.
         """
-        return
+        # for k in range(data.shape[0]):
+        #     input = data[k, :self.input_dim]
+        #     hidden = numpy.zeros(self.hidden_len,)
+        #     for i in range(self.hidden_len):
+        # for k in range(data.shape[0]):
+        #     data_input = data[k, : self.input_dim]
+        output = list()
+        for data_input in data:
+            data_input = numpy.reshape(data_input, [data_input.shape[0], 1])
+            for b, w in zip(self.biases[:-1], self.weights[:-1]):
+                data_input = sigmoid(numpy.dot(w, data_input) + b)
+            for b, w in zip(self.biases[-1:], self.weights[-1:]):
+                data_input = relu(numpy.dot(w, data_input) + b)
+            output.append(data_input)
+        return output
 
     # Compute the gradients of the parameters for the total loss
     def compute_gradients(self, data, label):
@@ -84,7 +136,7 @@ def sigmoid(z):
     :param z: a vector or Numpy array
     :return:
     """
-    return 1.0 / (1.0 + np.exp(-z))
+    return 1.0 / (1.0 + numpy.exp(-z))
 
 
 # relu function
@@ -93,28 +145,4 @@ def relu(z):
     :param z: a vector or Numpy array
     :return:
     """
-    return np.maximum(z, 0, z)
-
-
-# Create network:
-nn = MLP({'input_dim': 100, 'layers': [10, 20]})
-print(nn.input_dim)
-print(nn.layers)
-
-# # Train:
-# for epoch in range(n_iter):
-#     loss = 0
-#     for b in make_batches():
-#     # make_batches return the indices of a mini batch
-#         batch_X = data[b]
-#         batch_y = label[b]
-#         loss += numpy.mean(numpy.square(nn(batch_X) – batch_y))
-#         gs = nn.compute_gradients(batch_X, batch_y)
-#         ps = nn.get_params()
-#         u = [(p[0]-lr*g[0], p[1]-lr*g[1]) for p, g in zip(ps, gs)]
-#         # lr is the learning rate
-#         nn.set_params(u)
-#     print(loss/len(label))
-#
-# # Make predictions:
-# p = (nn(data)>0.5).astype('float32')
+    return numpy.maximum(z, 0, z)
