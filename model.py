@@ -58,7 +58,7 @@ class MLP(object):
         #                 zip(self.layers[:-1], self.layers[1:])]
         # for x , y in(zip(self.layers[:-1], self.layers[1:])):
         #     print(str(x) + " : " + str(y))
-        print(self.biases)
+        # print(self.biases)
         # print(self.weights)
         return
 
@@ -89,6 +89,7 @@ class MLP(object):
             for b, w in zip(self.biases[-1:], self.weights[-1:]):
                 data_input = sigmoid(numpy.dot(w, data_input) + b)
             output.append(data_input)
+        output = numpy.asarray(output)
         return output
 
     # Compute the gradients of the parameters for the total loss

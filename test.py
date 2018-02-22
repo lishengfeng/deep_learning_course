@@ -37,7 +37,7 @@ nn = MLP({'input_dim': 28 * 28, 'layers': [10, 20]})
 
 
 # Train:
-def train(data, label, n_iter=1000, lr=1e-3):
+def train(data, label, n_iter=30, lr=1e-3):
     for epoch in range(n_iter):
         loss = 0
         for b in make_batches(data.shape[0], 32):
@@ -53,10 +53,24 @@ def train(data, label, n_iter=1000, lr=1e-3):
         print(loss / len(label))
 
 
+print('before train')
+print(nn(data))
+
 train(data, label)
 
-# # Make predictions:
-# p = (nn(data) > 0.5).astype('float32')
-# #
-# print(nn.input_dim)
-# # print(nn.layers)
+# Make predictions:
+print(nn(data))
+p = (nn(data) > 0.1).astype('float32')
+print(len(p))
+p = (nn(data) > 0.2).astype('float32')
+print(len(p))
+p = (nn(data) > 0.3).astype('float32')
+print(len(p))
+p = (nn(data) > 0.5).astype('float32')
+print(len(p))
+p = (nn(data) > 0.6).astype('float32')
+print(len(p))
+p = (nn(data) > 0.7).astype('float32')
+print(len(p))
+p = (nn(data) > 0.8).astype('float32')
+print(len(p))
