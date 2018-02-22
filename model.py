@@ -1,21 +1,20 @@
 import numpy
-import random
 
 # Activation functions
 SIGMOID = 'sigmoid'
 RELU = 'relu'
 
 
-class Layer(object):
-    def __init__(self, units, activation='relu', **kwargs):
-        if 'input_dim' in kwargs:
-            self.input_dim = (kwargs.pop('input_dim'),)
-        self.units = units
-        self.activation = activation
+# class Layer(object):
+#     def __init__(self, units, activation='relu', **kwargs):
+#         if 'input_dim' in kwargs:
+#             self.input_dim = (kwargs.pop('input_dim'),)
+#         self.units = units
+#         self.activation = activation
 
 
 def cost_derivative(output_activations, y):
-    return (output_activations - y)
+    return output_activations - y
 
 
 class MLP(object):
@@ -131,10 +130,9 @@ class MLP(object):
                 to "self.biases" and "self.weights"."""
         nabla_b = [numpy.zeros(b.shape) for b in self.biases]
         nabla_w = [numpy.zeros(w.shape) for w in self.weights]
-        # feedforward
         activation = x
-        activations = [x]  # list to store all the activations, layer by layer
-        zs = []  # list to store all the z vectors, layer by layer
+        activations = [x]
+        zs = []
         # forward
         for b, w in zip(self.biases[:-1], self.weights[:-1]):
             z = numpy.dot(w, activation) + b
@@ -156,7 +154,7 @@ class MLP(object):
             delta = numpy.dot(self.weights[-l + 1].transpose(), delta) * sp
             nabla_b[-l] = delta
             nabla_w[-l] = numpy.dot(delta, activations[-l - 1].transpose())
-        return (nabla_b, nabla_w)
+        return nabla_b, nabla_w
 
     def get_params(self):
         """
@@ -167,7 +165,10 @@ class MLP(object):
         make it uniform, return the bias of the output neuron as a vector
         of single entry.
         """
-        return
+        result = []
+        for w, b in zip(self.weights, self.biases):
+            result.append((w, b))
+        return result
 
     # Set the parameters of the network
     def set_params(self, ps):
@@ -178,6 +179,8 @@ class MLP(object):
         entry). Calling the function sets the
         parameters of the network to the values given in ps.
         """
+        self.weights = [item[0] for item in ps]
+        self.biases = [item[1] for item in ps]
 
 
 # Sigmoid function
