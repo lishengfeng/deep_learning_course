@@ -1,4 +1,5 @@
 import numpy
+import random
 
 # Activation functions
 SIGMOID = 'sigmoid'
@@ -11,6 +12,10 @@ class Layer(object):
             self.input_dim = (kwargs.pop('input_dim'),)
         self.units = units
         self.activation = activation
+
+
+def cost_derivative(output_activations, y):
+    return (output_activations - y)
 
 
 class MLP(object):
@@ -27,7 +32,7 @@ class MLP(object):
         self.sizes = []
         self.sizes = [config['input_dim']] + config['layers'] + [1]
 
-        # self.num_layers = len(config)
+        self.num_layers = len(self.sizes)
         # layers = config['layers']
         self.input_dim = config['input_dim']
 
@@ -81,9 +86,9 @@ class MLP(object):
         for data_input in data:
             data_input = numpy.reshape(data_input, [data_input.shape[0], 1])
             for b, w in zip(self.biases[:-1], self.weights[:-1]):
-                data_input = sigmoid(numpy.dot(w, data_input) + b)
-            for b, w in zip(self.biases[-1:], self.weights[-1:]):
                 data_input = relu(numpy.dot(w, data_input) + b)
+            for b, w in zip(self.biases[-1:], self.weights[-1:]):
+                data_input = sigmoid(numpy.dot(w, data_input) + b)
             output.append(data_input)
         return output
 
@@ -106,7 +111,52 @@ class MLP(object):
         bias. (Note the number of tuples in the returned list is: # of
         hidden layers + 1.)
         """
-        return
+        nabla_b = [numpy.zeros(b.shape) for b in self.biases]
+        nabla_w = [numpy.zeros(w.shape) for w in self.weights]
+        for x, y in zip(data, label):
+            x = numpy.reshape(x, [x.shape[0], 1])
+            y = numpy.reshape(y, [1, 1])
+            delta_nabla_b, delta_nabla_w = self.backprop(x, y)
+            nabla_b = [nb + dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
+            nabla_w = [nw + dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
+        result = []
+        for w, b in zip(nabla_w, nabla_b):
+            result.append((w, b))
+        return result
+
+    def backprop(self, x, y):
+        """Return a tuple "(nabla_b, nabla_w)" representing the
+                gradient for the cost function C_x.  "nabla_b" and
+                "nabla_w" are layer-by-layer lists of numpy arrays, similar
+                to "self.biases" and "self.weights"."""
+        nabla_b = [numpy.zeros(b.shape) for b in self.biases]
+        nabla_w = [numpy.zeros(w.shape) for w in self.weights]
+        # feedforward
+        activation = x
+        activations = [x]  # list to store all the activations, layer by layer
+        zs = []  # list to store all the z vectors, layer by layer
+        # forward
+        for b, w in zip(self.biases[:-1], self.weights[:-1]):
+            z = numpy.dot(w, activation) + b
+            zs.append(z)
+            activation = relu(z)
+            activations.append(activation)
+        for b, w in zip(self.biases[-1:], self.weights[-1:]):
+            z = numpy.dot(w, activation) + b
+            zs.append(z)
+            activation = sigmoid(z)
+            activations.append(activation)
+        # backward pass
+        delta = cost_derivative(activations[-1], y) * d_sigmoid(zs[-1])
+        nabla_b[-1] = delta
+        nabla_w[-1] = numpy.dot(delta, activations[-2].transpose())
+        for l in range(2, self.num_layers):
+            z = zs[-l]
+            sp = d_relu(z)
+            delta = numpy.dot(self.weights[-l + 1].transpose(), delta) * sp
+            nabla_b[-l] = delta
+            nabla_w[-l] = numpy.dot(delta, activations[-l - 1].transpose())
+        return (nabla_b, nabla_w)
 
     def get_params(self):
         """
@@ -139,6 +189,14 @@ def sigmoid(z):
     return 1.0 / (1.0 + numpy.exp(-z))
 
 
+def d_sigmoid(z):
+    """
+    :param z: a vector or Numpy array
+    :return:
+    """
+    return sigmoid(*(1 - sigmoid(z)))
+
+
 # relu function
 def relu(z):
     """
@@ -146,3 +204,13 @@ def relu(z):
     :return:
     """
     return numpy.maximum(z, 0, z)
+
+
+def d_relu(z):
+    """
+    :param z:
+    :return:
+    """
+    z[z <= 0] = 0
+    z[z > 0] = 1
+    return z

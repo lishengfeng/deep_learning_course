@@ -43,13 +43,12 @@ def train(data, label, n_iter=30, lr=1e-3):
             batch_X = data[b]
             batch_y = label[b]
             loss += np.mean(np.square(nn(batch_X) - batch_y))
-            print(loss)
-        #     gs = nn.compute_gradients(batch_X, batch_y)
+            gs = nn.compute_gradients(batch_X, batch_y)
         #     ps = nn.get_params()
         #     u = [(p[0] - lr * g[0], p[1] - lr * g[1]) for p, g in zip(ps, gs)]
         #     # lr is the learning rate
         #     nn.set_params(u)
-        # print(loss / len(label))
+        print(loss / len(label))
 
 train(data, label)
 
