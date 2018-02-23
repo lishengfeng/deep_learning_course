@@ -45,9 +45,32 @@ class MLP(object):
         # # Output layer
         # self.layers.append(numpy.zeros(1))
 
-        self.biases = [numpy.random.randn(y, 1) for y in self.sizes[1:]]
-        self.weights = [numpy.random.randn(y, x) for x, y in
-                        zip(self.sizes[:-1], self.sizes[1:])]
+        # self.biases = [numpy.random.randn(y, 1) for y in self.sizes[1:]]
+        # self.weights = [numpy.random.randn(y, x) for x, y in
+        #                 zip(self.sizes[:-1], self.sizes[1:])]
+
+
+        # with open('biases', 'w') as myfile:
+        #     wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
+        #     wr.writerow(self.biases)
+        # with open('weights', 'w') as myfile:
+        #     wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
+        #     wr.writerow(self.weights)
+
+        # numpy.save("biases", self.biases)
+        # numpy.save("weights", self.weights)
+
+        self.biases = numpy.load('biases.npy')
+        self.weights = numpy.load('weights.npy')
+
+        # with open('biases', 'r') as f:
+        #     reader = csv.reader(f)
+        #     self.biases = list(reader)
+        # with open('weights', 'r') as f:
+        #     reader = csv.reader(f)
+        #     self.weights = list(reader)
+
+
         #
         # self.add(Layer(layers[0], input_dim=config['input_dim']))
         # for n in layers[1:]:
