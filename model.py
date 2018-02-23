@@ -1,4 +1,6 @@
 import numpy
+import csv
+
 
 # Activation functions
 SIGMOID = 'sigmoid'
@@ -15,7 +17,7 @@ numpy.set_printoptions(threshold=numpy.nan)
 
 
 def cost_derivative(output_activations, y):
-    return output_activations - y
+    return (output_activations - y)
 
 
 class MLP(object):
@@ -30,7 +32,7 @@ class MLP(object):
         first hidden layer has 10 neurons and the second has 20.
         """
         self.sizes = []
-        self.sizes = [config['input_dim']] + config['layers'] + [output_size]
+        self.sizes = [config['input_dim']] + config['layers']
 
         self.num_layers = len(self.sizes)
         # layers = config['layers']
@@ -109,7 +111,7 @@ class MLP(object):
         for data_input in data:
             data_input = numpy.reshape(data_input, [data_input.shape[0], 1])
             for b, w in zip(self.biases[:-1], self.weights[:-1]):
-                data_input = relu(numpy.dot(w, data_input) + b)
+                data_input = sigmoid(numpy.dot(w, data_input) + b)
             for b, w in zip(self.biases[-1:], self.weights[-1:]):
                 data_input = sigmoid(numpy.dot(w, data_input) + b)
             output.append(data_input.ravel())
@@ -118,7 +120,7 @@ class MLP(object):
         return output
 
     # Compute the gradients of the parameters for the total loss
-    def compute_gradients(self, data, label):
+    def compute_gradients(self, data, label, mini_batch_size, eta, j, test_data=None):
         """
         :param data: numpy ndarray of size (n x m) (i.e., a matrix) with dtype
         float32. Each row is a data point
@@ -138,35 +140,44 @@ class MLP(object):
         """
         nabla_b = [numpy.zeros(b.shape) for b in self.biases]
         nabla_w = [numpy.zeros(w.shape) for w in self.weights]
+        k = 0
         for x, y in zip(data, label):
             x = numpy.reshape(x, [x.shape[0], 1])
             y = numpy.reshape(y, [y.shape[0], 1])
             delta_nabla_b, delta_nabla_w = self.backprop(x, y)
-            nabla_b = [nb + dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
-            nabla_w = [nw + dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
+            nabla_b = [nb+dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
+            nabla_w = [nw+dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
+            k = k+1
+        self.weights = [w-(eta/mini_batch_size)*nw
+                        for w, nw in zip(self.weights, nabla_w)]
+        self.biases = [b-(eta/mini_batch_size)*nb
+                       for b, nb in zip(self.biases, nabla_b)]
         result = []
         for w, b in zip(nabla_w, nabla_b):
             result.append((w, b))
         return result
 
+    def test(self, j, n_test, test_data=None):
+        if test_data:
+            print("Epoch {} : {} / {}".format(j, self.evaluate(test_data),
+                                              n_test));
+        else:
+            print("Epoch {} complete".format(j))
+
+
     def backprop(self, x, y):
-        """Return a tuple "(nabla_b, nabla_w)" representing the
-                gradient for the cost function C_x.  "nabla_b" and
-                "nabla_w" are layer-by-layer lists of numpy arrays, similar
-                to "self.biases" and "self.weights"."""
+        """Return a tuple ``(nabla_b, nabla_w)`` representing the
+        gradient for the cost function C_x.  ``nabla_b`` and
+        ``nabla_w`` are layer-by-layer lists of numpy arrays, similar
+        to ``self.biases`` and ``self.weights``."""
         nabla_b = [numpy.zeros(b.shape) for b in self.biases]
         nabla_w = [numpy.zeros(w.shape) for w in self.weights]
+        # feedforward
         activation = x
-        activations = [x]
-        zs = []
-        # forward
-        for b, w in zip(self.biases[:-1], self.weights[:-1]):
-            z = numpy.dot(w, activation) + b
-            zs.append(z)
-            activation = relu(z)
-            activations.append(activation)
-        for b, w in zip(self.biases[-1:], self.weights[-1:]):
-            z = numpy.dot(w, activation) + b
+        activations = [x] # list to store all the activations, layer by layer
+        zs = [] # list to store all the z vectors, layer by layer
+        for b, w in zip(self.biases, self.weights):
+            z = numpy.dot(w, activation)+b
             zs.append(z)
             activation = sigmoid(z)
             activations.append(activation)
@@ -174,13 +185,19 @@ class MLP(object):
         delta = cost_derivative(activations[-1], y) * d_sigmoid(zs[-1])
         nabla_b[-1] = delta
         nabla_w[-1] = numpy.dot(delta, activations[-2].transpose())
+        # Note that the variable l in the loop below is used a little
+        # differently to the notation in Chapter 2 of the book.  Here,
+        # l = 1 means the last layer of neurons, l = 2 is the
+        # second-last layer, and so on.  It's a renumbering of the
+        # scheme in the book, used here to take advantage of the fact
+        # that Python can use negative indices in lists.
         for l in range(2, self.num_layers):
             z = zs[-l]
-            sp = d_relu(z)
-            delta = numpy.dot(self.weights[-l + 1].transpose(), delta) * sp
+            sp = d_sigmoid(z)
+            delta = numpy.dot(self.weights[-l+1].transpose(), delta) * sp
             nabla_b[-l] = delta
-            nabla_w[-l] = numpy.dot(delta, activations[-l - 1].transpose())
-        return nabla_b, nabla_w
+            nabla_w[-l] = numpy.dot(delta, activations[-l-1].transpose())
+        return (nabla_b, nabla_w)
 
     def get_params(self):
         """
@@ -207,6 +224,23 @@ class MLP(object):
         """
         self.weights = [item[0] for item in ps]
         self.biases = [item[1] for item in ps]
+
+    def feedforward(self, a):
+        """Return the output of the network if ``a`` is input."""
+        for b, w in zip(self.biases[:-1], self.weights[:-1]):
+            a = sigmoid(numpy.dot(w, a)+b)
+        for b, w in zip(self.biases[-1:], self.weights[-1:]):
+            a = sigmoid(numpy.dot(w, a)+b)
+        return a
+
+    def evaluate(self, test_data):
+        """Return the number of test inputs for which the neural
+        network outputs the correct result. Note that the neural
+        network's output is assumed to be the index of whichever
+        neuron in the final layer has the highest activation."""
+        test_results = [(numpy.argmax(self.feedforward(x)), y)
+                        for (x, y) in test_data]
+        return sum(int(x == y) for (x, y) in test_results)
 
 
 # Sigmoid function

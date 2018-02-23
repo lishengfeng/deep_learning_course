@@ -26,7 +26,7 @@ from model import MLP
 
 import mnist_loader
 training_data, validation_data, test_data = mnist_loader.load_data_wrapper()
-training_data = list(training_data)[:2000]
+training_data = list(training_data)[:500]
 
 data = list()
 label = list()
@@ -49,24 +49,30 @@ def make_batches(total, batch_size):
 
 
 # Create network:
-nn = MLP({'input_dim': 28 * 28, 'layers': [30, 10, 2]}, label[0].shape[0])
+nn = MLP({'input_dim': 28 * 28, 'layers': [30, 10]}, label[0].shape[0])
 
 
 # Train:
-def train(data, label, n_iter=30, lr=1e-3):
+def train(data, label, n_iter=30, lr=3.0, batch_size=10):
+    i = 0
+    k_test_data = list(test_data)
+    n_test = len(k_test_data)
     for epoch in range(n_iter):
         loss = 0
-        for b in make_batches(data.shape[0], 32):
+        batchs = make_batches(data.shape[0], batch_size)
+        for b in batchs:
             # make_batches return the indices of a mini batch
             batch_X = data[b]
             batch_y = label[b]
             loss += np.mean(np.square(nn(batch_X) - batch_y))
-            gs = nn.compute_gradients(batch_X, batch_y)
-            ps = nn.get_params()
-            u = [(p[0] - lr * g[0], p[1] - lr * g[1]) for p, g in zip(ps, gs)]
-            # lr is the learning rate
-            nn.set_params(u)
-        print(loss / len(label))
+            gs = nn.compute_gradients(batch_X, batch_y, batch_size, lr, i, test_data)
+            # ps = nn.get_params()
+            # u = [(p[0] - lr * g[0], p[1] - lr * g[1]) for p, g in zip(ps, gs)]
+            # # lr is the learning rate
+            # nn.set_params(u)
+        # print(loss / len(label))
+        nn.test(i, n_test, k_test_data)
+        i = i+1
 
 
 train(data, label)
