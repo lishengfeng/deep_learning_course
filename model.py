@@ -19,7 +19,7 @@ def cost_derivative(output_activations, y):
 
 
 class MLP(object):
-    def __init__(self, config):
+    def __init__(self, config, output_size=1):
         """
         :param config: a python dictionary providing the configuration of the
         neural network. It contains two
@@ -30,7 +30,7 @@ class MLP(object):
         first hidden layer has 10 neurons and the second has 20.
         """
         self.sizes = []
-        self.sizes = [config['input_dim']] + config['layers'] + [1]
+        self.sizes = [config['input_dim']] + config['layers'] + [output_size]
 
         self.num_layers = len(self.sizes)
         # layers = config['layers']
@@ -89,7 +89,7 @@ class MLP(object):
                 data_input = relu(numpy.dot(w, data_input) + b)
             for b, w in zip(self.biases[-1:], self.weights[-1:]):
                 data_input = sigmoid(numpy.dot(w, data_input) + b)
-            output.append(data_input[0][0])
+            output.append(data_input.ravel())
         output = numpy.asarray(output)
         # output = numpy.reshape(output, (output.shape[0],))
         return output
@@ -117,7 +117,7 @@ class MLP(object):
         nabla_w = [numpy.zeros(w.shape) for w in self.weights]
         for x, y in zip(data, label):
             x = numpy.reshape(x, [x.shape[0], 1])
-            y = numpy.reshape(y, [1, 1])
+            y = numpy.reshape(y, [y.shape[0], 1])
             delta_nabla_b, delta_nabla_w = self.backprop(x, y)
             nabla_b = [nb + dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
             nabla_w = [nw + dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]

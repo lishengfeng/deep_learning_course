@@ -1,26 +1,42 @@
 import numpy as np
 from model import MLP
-from keras.datasets import mnist
 
-(x_train, y_train), (x_test, y_test) = mnist.load_data()
+# from keras.datasets import mnist
+#
+# (x_train, y_train), (x_test, y_test) = mnist.load_data()
+#
+#
+# def select_data(X, y, i, n, ny):
+#     ixs = np.nonzero(y == i)[0]
+#     xn = X[ixs[np.random.permutation(len(ixs))[:n]]]
+#     yn = ny * np.ones((n,))
+#     return xn, yn
+#
+#
+# X0, y0 = select_data(x_train, y_train, 2, 1000, 1)
+# X1, y1 = select_data(x_train, y_train, 6, 1000, 2)
+# data = np.concatenate([X0, X1], axis=0)
+# label = np.concatenate([y0, y1], axis=0)
+#
+# # shuffle data
+# ixs = np.random.permutation(len(label))
+# data = data[ixs].reshape((len(label), -1))
+# label = label[ixs]
 
 
-def select_data(X, y, i, n, ny):
-    ixs = np.nonzero(y == i)[0]
-    xn = X[ixs[np.random.permutation(len(ixs))[:n]]]
-    yn = ny * np.ones((n,))
-    return xn, yn
+import mnist_loader
+training_data, validation_data, test_data = mnist_loader.load_data_wrapper()
+training_data = list(training_data)[:2000]
 
-
-X0, y0 = select_data(x_train, y_train, 2, 1000, 0)
-X1, y1 = select_data(x_train, y_train, 6, 1000, 1)
-data = np.concatenate([X0, X1], axis=0)
-label = np.concatenate([y0, y1], axis=0)
-
-# shuffle data
-ixs = np.random.permutation(len(label))
-data = data[ixs].reshape((len(label), -1))
-label = label[ixs]
+data = list()
+label = list()
+for x, y in training_data:
+    x = np.reshape(x, (x.shape[0],))
+    y = np.reshape(y, (y.shape[0],))
+    data.append(x)
+    label.append(y)
+data = np.asarray(data)
+label = np.asarray(label)
 
 
 def make_batches(total, batch_size):
@@ -33,7 +49,7 @@ def make_batches(total, batch_size):
 
 
 # Create network:
-nn = MLP({'input_dim': 28 * 28, 'layers': [10, 20]})
+nn = MLP({'input_dim': 28 * 28, 'layers': [30, 10, 2]}, label[0].shape[0])
 
 
 # Train:
@@ -53,24 +69,8 @@ def train(data, label, n_iter=30, lr=1e-3):
         print(loss / len(label))
 
 
-print('before train')
-print(nn(data))
-
 train(data, label)
 
 # Make predictions:
-print(nn(data))
-p = (nn(data) > 0.1).astype('float32')
-print(len(p))
-p = (nn(data) > 0.2).astype('float32')
-print(len(p))
-p = (nn(data) > 0.3).astype('float32')
-print(len(p))
 p = (nn(data) > 0.5).astype('float32')
-print(len(p))
-p = (nn(data) > 0.6).astype('float32')
-print(len(p))
-p = (nn(data) > 0.7).astype('float32')
-print(len(p))
-p = (nn(data) > 0.8).astype('float32')
 print(len(p))
