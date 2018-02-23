@@ -3,6 +3,7 @@ import numpy
 # Activation functions
 SIGMOID = 'sigmoid'
 RELU = 'relu'
+numpy.set_printoptions(threshold=numpy.nan)
 
 
 # class Layer(object):
@@ -88,8 +89,9 @@ class MLP(object):
                 data_input = relu(numpy.dot(w, data_input) + b)
             for b, w in zip(self.biases[-1:], self.weights[-1:]):
                 data_input = sigmoid(numpy.dot(w, data_input) + b)
-            output.append(data_input)
+            output.append(data_input[0][0])
         output = numpy.asarray(output)
+        # output = numpy.reshape(output, (output.shape[0],))
         return output
 
     # Compute the gradients of the parameters for the total loss
@@ -198,7 +200,7 @@ def d_sigmoid(z):
     :param z: a vector or Numpy array
     :return:
     """
-    return sigmoid(*(1 - sigmoid(z)))
+    return sigmoid(z)*(1 - sigmoid(z))
 
 
 # relu function
